@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+
 """
 Explores various methods of computing derivatives for a given function.
 
 Simple Slope Derivatives: utilizes the slope between two adjacent points
 Computed at left, right and mid time values.
 
-Root Mean Square (RMS): Metric for evaluating approximation's closeness to the 
+Root Mean Square (RMS): Metric for evaluating approximation's closeness to the
 true value. Lower RMS values indicate a closer fit.
 
 3-Point Derivative: Averages the slopes on either side of a given point
@@ -15,11 +16,11 @@ true value. Lower RMS values indicate a closer fit.
 Functional Fit Derivative: Uses a parabolic fit on 3 distinct points, computes
 the derivative based on the respective a, b, and c values found
 
-Five-Point Stencil: Uses Taylor series for a direct approximation of the 
+Five-Point Stencil: Uses Taylor series for a direct approximation of the
 derivative.
 
 @author Shounak Ghosh
-@version 2.11.2022 
+@version 2.11.2022
 
 """
 
@@ -56,8 +57,8 @@ def compute_times(lowerbound, higherbound, num):
 
 def compute_f1_values(times):
     """
-        Computes the values of the function whose derivative we are interested in
-        at the given times
+        Computes the values of the function whose derivative we are interested
+        in at the given times
         @param times: List of times at which f1 is to be evaluated at
         @return: A list of [t, f1(t)] pairs for each of the specified times
     """
@@ -183,16 +184,17 @@ def compute_functional_fit_derivative(values):
     return derivs
 
 
-def compute_functional_fit_rms(derivs):
+def compute_rms(derivs, n):
     """
-    Computes the RMS for functional fit derivatives
-    @param derivs: List of functional fit derivatives ([t, derivative])
+    Computes the RMS for the given derivative values
+    @param derivs: List of derivative values ([t, derivative])
+    @param n: The number of time points (may differ from len(derivs))
     @return: The RMS value
     """
     rms = 0
     for deriv in derivs:
         rms += abs(deriv[1] ** 2 - compute_f2(deriv[0]) ** 2)
-    rms /= len(derivs)
+    rms /= n
     return math.sqrt(rms)
 
 
@@ -218,19 +220,31 @@ def generate_rms_plot_data(initial, numpoints, scale):
     @param numpoints: the number of different N's we are finding RMS values for
     @param scale: Multiplicative factor by which N is increased
     @return: List of RMS values for each N,
-             format [N, simple RMS's, functional fit RMS]
+             format [N, simple RMS's, 3-point RMS,
+             functional fit RMS, 5-point-stencil RMS]
     """
     rms = []
     for i in range(numpoints):
         n = int(initial * scale ** i)
         times = compute_times(-10.0, 10.0, n)
         vals = compute_f1_values(times)
+
         simple_derivs = compute_simple_derivatives(vals)
         s_rms = compute_simple_rms_values(simple_derivs)
+
+        tp_derivs = compute_3_point_derivative(vals)
+        tp_rms = compute_rms(tp_derivs, len(tp_derivs) + 2)
+
         ff_derivs = compute_functional_fit_derivative(vals)
-        ff_rms = compute_functional_fit_rms(ff_derivs)
+        ff_rms = compute_rms(ff_derivs, len(ff_derivs))
+
+        fps_derivs = compute_five_point_stencil(vals)
+        fps_rms = compute_rms(fps_derivs, len(fps_derivs) + 2)
+
         s_rms.insert(0, n)
+        s_rms.append(tp_rms)
         s_rms.append(ff_rms)
+        s_rms.append(fps_rms)
         rms.append(s_rms)
     return rms
 
@@ -238,7 +252,8 @@ def generate_rms_plot_data(initial, numpoints, scale):
 def plot_rms_n(rms):
     """
     Creates an RMS vs N plot
-    @param rms: RMS data in the [N, simple RMS's, functional fit RMS] format
+    @param rms: RMS data in the [N, simple RMS's, 3-point RMS,
+                functional fit RMS, 5-point-stencil RMS] format
     """
     reformat = []
     for i in range(1, len(rms[0])):
@@ -248,10 +263,12 @@ def plot_rms_n(rms):
             reformat[i - 1].append([vals[0], vals[i]])
 
     # Use plot_points if there is overlap
-    plot_values(reformat[0], 'b')
-    plot_points(reformat[1], 'g')
-    plot_values(reformat[2], 'y')
-    plot_values(reformat[3], 'r')
+    # plot_values(reformat[0], 'r')  # right
+    # plot_points(reformat[1], 'y')  # left
+    # plot_values(reformat[2], 'm')  # mid
+    # plot_points(reformat[3], 'g')  # 3 point
+    plot_values(reformat[4], '#ff007f')  # functional fit
+    # plot_values(reformat[5], 'b')  # 5 point stencil
 
 
 def plot_points(values, color):
@@ -284,43 +301,50 @@ def main():
     """
     Driver method
     """
-    times = compute_times(-10.0, 10.0, 100)
+    n = int(input("N: "))
+    times = compute_times(-10.0, 10.0, n)
     vals = compute_f1_values(times)
 
     # Set the plot boundaries
-    plt.figure("Exploring Derivatives", figsize=(8, 8))
-    plt.xlim(-2, 2)
-    plt.ylim(-2, 2)
-    plt.xlabel("time")
-    plt.ylabel("values")
-
-    plot_values(vals, 'k')
-    plot_values(compute_f2_values(times), 'c')
+    # plt.figure("Exploring Derivatives", figsize=(8, 8))
+    # plt.xlim(-2, 2)
+    # plt.ylim(-2, 2)
+    # plt.xlabel("time")
+    # plt.ylabel("values")
+    #
+    # plot_values(vals, 'k')
+    # plot_values(compute_f2_values(times), 'c')
 
     simple_derivs = compute_simple_derivatives(vals)
-    plot_values(simple_derivs[0], 'r')
-    plot_values(simple_derivs[1], 'y')
-    plot_values(simple_derivs[2], 'm')
-
+    # plot_values(simple_derivs[0], 'r')
+    # plot_values(simple_derivs[1], 'y')
+    # plot_values(simple_derivs[2], 'm')
+    print("Simple Derivatives RMS:", compute_simple_rms_values(simple_derivs))
     output_results_to_file(vals, simple_derivs)
 
+    tp_derivs = compute_3_point_derivative(vals)
+    # plot_values(tp_derivs, 'g')
+    tp_rms = compute_rms(tp_derivs, n)
+    print("Three-Point Derivative RMS:", tp_rms)
+
     ff_derivs = compute_functional_fit_derivative(vals)
-    plot_values(ff_derivs, '#ff007f')
+    # plot_values(ff_derivs, '#ff007f')
+    ff_rms = compute_rms(ff_derivs, n)
+    print("Functional-Fit Derivative RMS:", ff_rms)
 
-    plot_values(compute_3_point_derivative(vals), 'g')
+    fps_derivs = compute_five_point_stencil(vals)
+    # plot_points(ff_derivs, 'b')
+    fps_rms = compute_rms(fps_derivs, n)
+    print("Five-Point Stencil Derivative RMS:", fps_rms)
 
-    plot_points(compute_five_point_stencil(vals), 'b')
-
-    plt.draw()
-
-    plt.figure("RMS Vs. Step Plot", figsize=(8, 8))
-    plt.xlabel("N")
-    plt.ylabel("RMS Values")
-    rms_plt_data = generate_rms_plot_data(10, 10, 2)
-    plot_rms_n(rms_plt_data)
-    plt.draw()
-
-    plt.show()
+    # plt.figure("RMS Vs. Step Plot", figsize=(8, 8))
+    # plt.xlabel("N")
+    # plt.ylabel("RMS Values")
+    # rms_plt_data = generate_rms_plot_data(10, 10, 2)
+    # plot_rms_n(rms_plt_data)
+    # plt.draw()
+    #
+    # plt.show()
 
 
 if __name__ == '__main__':
