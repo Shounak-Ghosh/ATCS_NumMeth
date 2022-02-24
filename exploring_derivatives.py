@@ -263,12 +263,12 @@ def plot_rms_n(rms):
             reformat[i - 1].append([vals[0], vals[i]])
 
     # Use plot_points if there is overlap
-    # plot_values(reformat[0], 'r')  # right
-    # plot_points(reformat[1], 'y')  # left
-    # plot_values(reformat[2], 'm')  # mid
-    # plot_points(reformat[3], 'g')  # 3 point
+    plot_values(reformat[0], 'r')  # right
+    plot_points(reformat[1], 'y')  # left
+    plot_values(reformat[2], 'm')  # mid
+    plot_points(reformat[3], 'g')  # 3 point
     plot_values(reformat[4], '#ff007f')  # functional fit
-    # plot_values(reformat[5], 'b')  # 5 point stencil
+    plot_values(reformat[5], 'b')  # 5 point stencil
 
 
 def plot_points(values, color):
@@ -306,45 +306,44 @@ def main():
     vals = compute_f1_values(times)
 
     # Set the plot boundaries
-    # plt.figure("Exploring Derivatives", figsize=(8, 8))
-    # plt.xlim(-2, 2)
-    # plt.ylim(-2, 2)
-    # plt.xlabel("time")
-    # plt.ylabel("values")
-    #
-    # plot_values(vals, 'k')
-    # plot_values(compute_f2_values(times), 'c')
+    plt.figure("Exploring Derivatives", figsize=(8, 8))
+    plt.xlim(-2, 2)
+    plt.ylim(-2, 2)
+    plt.xlabel("time")
+    plt.ylabel("values")
+
+    plot_values(vals, 'k')
+    plot_values(compute_f2_values(times), 'c')
 
     simple_derivs = compute_simple_derivatives(vals)
-    # plot_values(simple_derivs[0], 'r')
-    # plot_values(simple_derivs[1], 'y')
-    # plot_values(simple_derivs[2], 'm')
+    plot_values(simple_derivs[0], 'r')
+    plot_values(simple_derivs[1], 'y')
+    plot_values(simple_derivs[2], 'm')
     print("Simple Derivatives RMS:", compute_simple_rms_values(simple_derivs))
     output_results_to_file(vals, simple_derivs)
 
     tp_derivs = compute_3_point_derivative(vals)
-    # plot_values(tp_derivs, 'g')
+    plot_values(tp_derivs, 'g')
     tp_rms = compute_rms(tp_derivs, n)
     print("Three-Point Derivative RMS:", tp_rms)
 
     ff_derivs = compute_functional_fit_derivative(vals)
-    # plot_values(ff_derivs, '#ff007f')
+    plot_values(ff_derivs, '#ff007f')
     ff_rms = compute_rms(ff_derivs, n)
     print("Functional-Fit Derivative RMS:", ff_rms)
 
     fps_derivs = compute_five_point_stencil(vals)
-    # plot_points(ff_derivs, 'b')
+    plot_points(ff_derivs, 'b')
     fps_rms = compute_rms(fps_derivs, n)
     print("Five-Point Stencil Derivative RMS:", fps_rms)
 
-    # plt.figure("RMS Vs. Step Plot", figsize=(8, 8))
-    # plt.xlabel("N")
-    # plt.ylabel("RMS Values")
-    # rms_plt_data = generate_rms_plot_data(10, 10, 2)
-    # plot_rms_n(rms_plt_data)
-    # plt.draw()
-    #
-    # plt.show()
+    plt.figure("RMS Vs. Step Plot", figsize=(8, 8))
+    plt.xlabel("N")
+    plt.ylabel("RMS Values")
+    rms_plt_data = generate_rms_plot_data(10, 10, 2)
+    plot_rms_n(rms_plt_data)
+
+    plt.show()
 
 
 if __name__ == '__main__':
