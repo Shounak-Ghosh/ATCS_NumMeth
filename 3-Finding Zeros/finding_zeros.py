@@ -88,6 +88,13 @@ def plot_function(f, color):
 
 def main():
     function_list = [f1, f2, f3, f4, f5, f6, f7, f8, f9]
+
+    for function in function_list:
+        try:
+            print(bisection(-3, 3, 0.000001, 100000, function))
+        except AssertionError as msg:
+            print(msg)
+
     color_list = ['r', 'b', 'g', 'y', 'm', 'c', '#3c00ff', '#ff007f', '#00ffae']
     # Set the plot boundaries
     plt.figure("Functions", figsize=(8, 8))
@@ -99,12 +106,6 @@ def main():
     for i in range(len(function_list)):
         plot_function(function_list[i], color_list[i])
     plt.show()
-
-    for function in function_list:
-        try:
-            print(bisection(-3, 3, 0.000001, 100000, function))
-        except AssertionError as msg:
-            print(msg)
 
 
 if __name__ == '__main__':
