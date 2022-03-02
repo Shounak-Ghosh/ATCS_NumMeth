@@ -2,63 +2,98 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-color_list = ['r', 'b', 'g', 'y', 'm', 'k', 'c', 'b']
+times = np.linspace(-10, 10, 100)
 
 
-def function_list(x):
-    return [x ** 2, 1 + x ** 2, math.exp(-x ** 2), x * math.exp(-x ** 2),
-            x * math.exp(x ** 2), x * math.exp(-x), x * math.exp(x),
-            math.sqrt(abs(x))]
+def f0(t):
+    return t ** 3 - t - 2
 
 
-def generate_function_point_list():
-    time_points = np.linspace(-10, 10, 100)
-    point_list = []
-    for t in time_points:
-        vals = function_list(t)
-        vals.insert(0, t)
-        point_list.append(vals)
-    return point_list
+def f1(t):
+    return t ** 2
 
 
-def plot_functions(point_list):
-    num_functions = len(point_list[0]) - 1
-    time_list = []
-    val_list = []
-    for i in range(num_functions):
-        val_list.append(list())
-
-    for point in point_list:
-        time_list.append(point[0])
-        for i in range(1, num_functions+1):
-            val_list[i-1].append(point[i])
-
-    # print(time_list)
-    # print(val_list[7])
-    # print(len(time_list), len(val_list[7]))
-    # i = 7
-    # plt.scatter(time_list, val_list[i], color=color_list[i])
-    # plt.plot(time_list, val_list[i], color=color_list[i])
-    # plt.draw()
+def f2(t):
+    return 1 + t ** 2
 
 
+def f3(t):
+    return math.exp(-t ** 2)
 
-    # for point in point_list:
-    #     for i in range(1, num_functions):
-    #         plt.plot(point[0], point[i], color=color_list[i])
-    #         plt.scatter(point[0], point[i], color=color_list[i])
-    #         plt.draw()
+
+def f4(t):
+    return t * math.exp(-t ** 2)
+
+
+def f5(t):
+    return t * math.exp(t ** 2)
+
+
+def f6(t):
+    return t * math.exp(-t)
+
+
+def f7(t):
+    return t * math.exp(t)
+
+
+def f8(t):
+    return math.sqrt(abs(t))
+
+
+def f9(t):
+    return t ** 3
+
+
+def bisection(left, right, tol, max_iter, f):
+    assert left < right, \
+        "Leftmost endpoint must be less than rightmost endpoint."
+    assert (f(left) < 0 and f(right) > 0) or (f(left) > 0 and f(right) < 0), \
+        "One endpoint must be greater than 0; The other less than 0."
+
+    n = 1
+
+    while n < max_iter:
+        mid = (left + right) / 2
+        mid_val = f(mid)
+        if mid_val == 0 or (right - left) / 2 < tol:  # solution found
+            return [mid, mid_val]
+        n += 1
+        if np.sign(mid_val) == np.sign(f(left)):
+            left = mid
+        else:
+            right = mid
+    return "Bisection failed."
+
+
+def plot_function(f, color):
+    vals = []
+    for time in times:
+        vals.append(f(time))
+
+    plt.scatter(times, vals, color=color)
+    plt.plot(times, vals, color=color)
+    plt.draw()
 
 
 def main():
+    function_list = [f1, f2, f3, f4, f5, f6, f7, f8, f9]
+    color_list = ['r', 'b', 'g', 'y', 'm', 'k', 'c', '#ff007f', '#00ffae']
     # Set the plot boundaries
     plt.figure("Functions", figsize=(8, 8))
-    plt.xlim(-2, 2)
-    plt.ylim(-2, 2)
+    plt.xlim(-3, 3)
+    plt.ylim(-3, 3)
     plt.xlabel("time")
     plt.ylabel("values")
-    plot_functions(generate_function_point_list())
+    for i in range(len(function_list)):
+        plot_function(function_list[i], color_list[i])
     plt.show()
+
+    for function in function_list:
+        try:
+            print(bisection(-3, 3, 0.000001, 100000, function))
+        except AssertionError as msg:
+            print(msg)
 
 
 if __name__ == '__main__':
