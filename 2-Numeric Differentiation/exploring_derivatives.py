@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import os
 
 """
-Explores various methods of computing derivatives for a given function.
+Explores various methods of computing derivatives for a given function and 
+compares to the actual known derivative.
 
 Simple Slope Derivatives: utilizes the slope between two adjacent points
 Computed at left, right and mid time values.
@@ -138,6 +140,7 @@ def output_results_to_file(values, derivs):
         out.append(
             [values[i][0], values[i][1], derivs[0][i][1], derivs[1][i][1],
              derivs[2][i][1]])
+
     out.append([rms[0], rms[1], rms[2], float('inf'), float('inf')])
     np.savetxt("simple_slopes.txt", out, delimiter=', ')
 
