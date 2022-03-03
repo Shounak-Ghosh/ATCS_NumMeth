@@ -2,12 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
+TOLERANCE = 10 ** -7
+MAX_ITERATIONS = 10 ** 5
 times = np.linspace(-10, 10, 100)
 step = times[1] - times[0]
 
 
 def f0(t):
-    return t ** 3 - t
+    return .7 ** t ** 3 - 7 * t - 2
 
 
 def f1(t):
@@ -75,12 +77,31 @@ def newton_raphson(initial, tol, max_iter, f):
     for i in range(max_iter):
         deriv = f_prime(f)(x)
         val = f(x)
-        if abs(deriv) < tol:
-            raise Exception("Stationary point reached.")
+        if abs(deriv) < tol:  # derivative equals 0
+            raise Exception("Local Min/Max encountered. Unable to continue.")
         x = x - val / deriv
         if abs(val) < tol:
             return [x, val]
-    raise Exception("Newton-Raphson failed.")
+    if np.sign(f(x + step)) > 0 and np.sign(f(x - step)) > 0:
+        raise Exception(
+            "Approaching positive asymptote. Choose a smaller initial value.")
+    elif np.sign(f(x + step)) < 0 and np.sign(f(x - step)) < 0:
+        raise Exception(
+            "Approaching negative asymptote. Choose a larger initial value.")
+    else:
+        raise Exception("Newton-Raphson failed.")
+
+
+def find_min_max(f):
+    try:
+        pt = newton_raphson(.2, TOLERANCE, MAX_ITERATIONS, f_prime(f))
+        if f_prime(f_prime(f))(pt[0]) > 0:
+            print("Local max found.")
+        else:
+            print("local min found.")
+        return [pt[0], f(pt[0])]
+    except Exception as e:
+        print(e)
 
 
 def plot_axes():
@@ -108,36 +129,38 @@ def main():
         print("f" + str(i))
         i += 1
         try:
-            print(bisection(-10, 10, 10 ** -7, 10 ** 5, function))
+            print(bisection(-10, 10, TOLERANCE, MAX_ITERATIONS, function))
         except Exception as e:
             print(e)
 
         try:
-            print(newton_raphson(.2, 10 ** -7, 10 ** 5, function))
+            print(newton_raphson(.2, TOLERANCE, MAX_ITERATIONS, function))
         except Exception as e:
             print(e)
         print("")
 
-    # function = f4
-    # bi = bisection(-10, 10, 0.000001, 100000, function)
-    # nr = newton_raphson(1, 0.000001, 100000, function)
+    function = f4
+    bi = bisection(-10, 10, 0.000001, 100000, function)
+    nr = newton_raphson(.1, 0.000001, 100000, function)
+    mm = find_min_max(function)
 
     color_list = ['r', 'b', 'g', 'y', 'm', 'c', '#03cf00', '#ff007f', '#00ffae']
     # Set the plot boundaries
-    # plt.figure("Functions", figsize=(8, 8))
-    # plt.xlim(-3, 3)
-    # plt.ylim(-3, 3)
-    # plt.xlabel("time")
-    # plt.ylabel("values")
-    # plot_axes()
-    # plot_function(function, 'b')
-    #
-    # try:
-    #     print(bi, nr)
-    #     plt.plot(bi[0], bi[1], 'rD')
-    #     plt.plot(nr[0], nr[1], 'gs')
-    # except Exception as e:
-    #     print(e)
+    plt.figure("Functions", figsize=(8, 8))
+    plt.xlim(-3, 3)
+    plt.ylim(-3, 3)
+    plt.xlabel("time")
+    plt.ylabel("values")
+    plot_axes()
+    plot_function(function, 'b')
+
+    try:
+        print(bi, nr, mm)
+        plt.plot(bi[0], bi[1], 'rD')
+        plt.plot(nr[0], nr[1], 'gs')
+        plt.plot(mm[0], mm[1], 'mp')
+    except Exception as e:
+        print(e)
 
     # for i in range(len(function_list)):
     #     plot_function(function_list[i], color_list[i])
