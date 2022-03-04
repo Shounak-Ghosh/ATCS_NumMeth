@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import os
+import argparse
 
 """
 Explores various methods of computing derivatives for a given function and 
@@ -300,11 +300,11 @@ def plot_values(values, color):
     plt.plot(t, v, color=color)
 
 
-def main():
+def main(num_points):
     """
     Driver method
     """
-    n = int(input("N: "))
+    n = num_points
     times = compute_times(-10.0, 10.0, n)
     vals = compute_f1_values(times)
 
@@ -350,4 +350,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--N", type=int, default=100,
+                        help="number of time points")
+    arguments = parser.parse_args()
+    main(arguments.N)
