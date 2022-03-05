@@ -269,8 +269,8 @@ def main(index, v):
         function = function_list[index]
         # Set the plot boundaries
         plt.figure("Functions", figsize=(8, 8))
-        x_bound = [-5, 5]
-        y_bound = [-10, 10]
+        x_bound = [-5, 2]
+        y_bound = [-1, 2]
         plt.xlim(x_bound[0], x_bound[1])
         plt.ylim(y_bound[0], y_bound[1])
         plt.xlabel("time")
@@ -281,14 +281,24 @@ def main(index, v):
 
         try:
             bi = bisection(-10, 10, 0.000001, 100000, function)
-            nr = newton_raphson(.2, 0.000001, 100000, function)
-            mm = find_min_max(function)
+
             plt.plot(bi[0], bi[1], 'rD')
+        except Exception as e:
+            print(e)
+
+        try:
+            nr = newton_raphson(.2, 0.000001, 100000, function)
             plt.plot(nr[0], nr[1], 'gs')
+        except Exception as e:
+            print(e)
+
+        try:
+            mm = find_min_max(function)
             if mm is not None:
                 plt.plot(mm[0], mm[1], color='#ff007f', marker='p')
         except Exception as e:
             print(e)
+
         plt.show()
 
 
