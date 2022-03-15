@@ -254,7 +254,7 @@ def main(index, v):
 
             try:
                 print("n_zero",
-                      newton_raphson(.1, TOLERANCE, MAX_ITERATIONS, f))
+                      newton_raphson(.001, TOLERANCE, MAX_ITERATIONS, f))
                 val = find_min_max(f)
                 if val[2]:
                     print("Local max found.")
