@@ -3,10 +3,14 @@ import argparse
 import numpy as np
 import math
 
+# TODO replace all loops with numpy operations; sum() and mulitply()
+
 MAX_ITERATIONS = 1e8
 THRESHOLD = 1e-5
 # TODO placeholder; should be replaced with a flexible h
-STEP = 1e-3
+STEP = 1e-6
+MOMENTUM = 0.9
+LEARNING_FACTOR = 1e-11
 
 
 def cubic(x, q):
@@ -58,20 +62,19 @@ def generate_least_squares(data, f, q):
     prev_dq = [] * len(q)
     print("Inital Error:", error(data, f, q))
 
-    for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
-        for j in range(int(check)):
+    for k in range(int(MAX_ITERATIONS / check)):  # segment the iteration
+        for m in range(int(check)):
             dq = compute_deltas(data, f, q)
-            for a in range(len(q)):
-                q[a] += dq[a]
+            q = np.add(q, dq)
 
             e = error(data, f, q)
             # print(prev_e - e)
             if abs(prev_e - e) < THRESHOLD:
-                print("# of Iterations: ", int((i + 1) * check + j))
+                print("\nFinal # of Iterations: ", int((k + 1) * check + m))
                 print("Error:", "{:e}".format(e))
                 return q
             prev_e = e
-        print("Check # of Iterations: ", int((i + 1) * check))
+        print("\nCheck # of Iterations: ", int((k + 1) * check))
         print("Error:", "{:e}".format(e))
         print("Q:", q)
 
@@ -98,14 +101,13 @@ def partial(f, x, q, j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
 
 
 def compute_deltas(data, f, q):
-    l = 1e-11  # lambda, our learning factor
-    dq = []
+    dq = np.zeros(len(q))
     for j in range(len(q)):
         eqj = 0
         for i in range(len(data[0])):  # for each data point
             eqj += (data[1][i] - f(data[0][i], q)) * partial(f, data[0][i], q,
                                                              j)
-        dq.append(l * eqj)
+        dq[j] = LEARNING_FACTOR * eqj
     return dq
 
 
@@ -152,7 +154,7 @@ def main():
     # plot_axes(x_bound, y_bound)
     #
     # times = np.linspace(-10, 10, 100)
-    # q = [1, 1, 0, 0]
+    # q = np.array([1, 1, 0, 0])
     # plt.plot(times, sine(times, q))
     # plt.scatter(times, sine(times, q))
     # partial_list = []
@@ -164,7 +166,7 @@ def main():
     plt.figure("Data plot", figsize=(8, 8))
     data = read_data("input.txt")
     plt.scatter(data[0], data[1])
-    q = [1, 10, 2, 3]
+    q = np.array([1, 10, 2, 3])
     q = generate_least_squares(data, gaussian, q)
     plt.scatter(data[0], gaussian(data[0], q), color='r')
 
