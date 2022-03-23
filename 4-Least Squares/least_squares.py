@@ -3,8 +3,10 @@ import argparse
 import numpy as np
 import math
 
+MAX_ITERATIONS = 1e8
+THRESHOLD = 1e-5
 # TODO placeholder; should be replaced with a flexible h
-STEP = 10 ** -3
+STEP = 1e-3
 
 
 def cubic(x, q):
@@ -38,36 +40,52 @@ def sine(x, q):
         return y
 
 
+def generate_least_squares(data, f, q):
+    check = 1e5
+    prev_e = error(data, f, q) + 1000
+    dq = [] * len(q)
+    prev_dq = [] * len(q)
+
+    for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
+        for j in range(int(check)):
+            for a in range(
+                    len(q)):  # for each argument, find and apply the delta
+                q[a] += delta(data, a, f, q)
+
+            e = error(data, f, q)
+            if prev_e - e < THRESHOLD:
+                print("# of Iterations: ", i * check + j)
+                print("Error:", e)
+
+    raise Exception("Maximum iterations exceeded.")
+
+
 def error(data, f, q):
     e = 0
     for i in range(len(data[0])):
-        e += (data[1] - f(data[0], q)) ** 2
+        e += (data[1][i] - f(data[[0][i]], q)) ** 2
     return e / 2
 
 
-def partial(f, x, q, i):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
-    q[i] += 2 * STEP  # 2h
+def partial(f, x, q, j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
+    q[j] += 2 * STEP  # 2h
     v1 = f(x, q)
-    q[i] -= STEP  # h
+    q[j] -= STEP  # h
     v2 = f(x, q)
-    q[i] -= 2 * STEP  # -h
+    q[j] -= 2 * STEP  # -h
     v3 = f(x, q)
-    q[i] -= STEP
+    q[j] -= STEP
     v4 = f(x, q)
     return (-v1 + 8 * v2 - 8 * v3 + v4) / (12 * STEP)
 
 
-def delta(data, f, x, q):
-    l = 1  # lambda
-    newq = [0] * len(q)
-    newq[0] = q[0]
-
-    for j in range(1, len(q)):  # skip q0 (constant)
-        eqj = 0  # partial E/qj
-        for i in range(1, len(q)):
-            eqj += (data[1] - f(x, q)) * partial(f, x, q, i)
-
-    print("DO THIS")
+def delta(data, j, f, q):
+    l = 0.05  # lambda, our learning factor
+    eqj = 0
+    for i in range(len(data[0])):  # for each data point
+        eqj += (data[1][i] - f(data[[0][i]], q)) * partial(f, data[[0][i]], q,
+                                                           j)
+    return l * eqj
 
 
 def plot_function(f, color):
@@ -114,14 +132,11 @@ def main():
 
     times = np.linspace(-10, 10, 100)
     q = [1, 1, 0, 0]
-    # print(times)
-    # print(type(times))
-    # print(sine(times, [1, 1, 1, 1]))
     plt.plot(times, sine(times, q))
     plt.scatter(times, sine(times, q))
     partial_list = []
     for t in times:
-        partial_list.append(partial(sine, t, q, 2))
+        partial_list.append(partial(sine, t, q, 1))
     plt.plot(times, partial_list)
     plt.scatter(times, partial_list)
 
