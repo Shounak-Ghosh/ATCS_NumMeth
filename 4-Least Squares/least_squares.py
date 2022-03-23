@@ -12,7 +12,7 @@ STEP = 1e-3
 def cubic(x, q):
     if isinstance(x, (int, np.float64)):
         return q[0] * x ** 3 + q[1] * x ** 2 + q[2] * x + q[3]
-    elif isinstance(x, (list, np.ndarray, np.generic)):
+    elif isinstance(x, (list, np.ndarray)):
         y = []
         for pt in x:
             y.append(q[0] * pt ** 3 + q[1] * pt ** 2 + q[2] * pt + q[3])
@@ -21,11 +21,11 @@ def cubic(x, q):
 
 def gaussian(x, q):
     if isinstance(x, (int, np.float64)):
-        return q[0] ** 2 * math.e ** ((x - q[1]) ** 2 / q[2] ** 2) + q[3] ** 2
+        return q[0] ** 2 * math.e ** -((x - q[1]) ** 2 / q[2] ** 2) + q[3] ** 2
     elif isinstance(x, (list, np.ndarray, np.generic)):
         y = []
         for pt in x:
-            y.append(q[0] ** 2 * math.e ** ((pt - q[1]) ** 2 / q[2] ** 2) + q[
+            y.append(q[0] ** 2 * math.e ** -((pt - q[1]) ** 2 / q[2] ** 2) + q[
                 3] ** 2)
         return y
 
@@ -40,22 +40,40 @@ def sine(x, q):
         return y
 
 
+def read_data(filename):
+    data = [[], []]
+    with open(filename, 'r') as f:
+        for line in f:
+            l = line.split()
+            # print(l)
+            data[0].append(int(l[0]))
+            data[1].append(int(l[1]))
+    # print(data)
+    return data
+
+
 def generate_least_squares(data, f, q):
     check = 1e5
-    prev_e = error(data, f, q) + 1000
-    dq = [] * len(q)
+    prev_e = error(data, f, q)
     prev_dq = [] * len(q)
+    print("Inital Error:", error(data, f, q))
 
     for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
         for j in range(int(check)):
-            for a in range(
-                    len(q)):  # for each argument, find and apply the delta
-                q[a] += delta(data, a, f, q)
+            dq = compute_deltas(data, f, q)
+            for a in range(len(q)):
+                q[a] += dq[a]
 
             e = error(data, f, q)
-            if prev_e - e < THRESHOLD:
-                print("# of Iterations: ", i * check + j)
-                print("Error:", e)
+            # print(prev_e - e)
+            if abs(prev_e - e) < THRESHOLD:
+                print("# of Iterations: ", int((i + 1) * check + j))
+                print("Error:", "{:e}".format(e))
+                return q
+            prev_e = e
+        print("Check # of Iterations: ", int((i + 1) * check))
+        print("Error:", "{:e}".format(e))
+        print("Q:", q)
 
     raise Exception("Maximum iterations exceeded.")
 
@@ -63,7 +81,7 @@ def generate_least_squares(data, f, q):
 def error(data, f, q):
     e = 0
     for i in range(len(data[0])):
-        e += (data[1][i] - f(data[[0][i]], q)) ** 2
+        e += (data[1][i] - f(data[0][i], q)) ** 2
     return e / 2
 
 
@@ -79,13 +97,16 @@ def partial(f, x, q, j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
     return (-v1 + 8 * v2 - 8 * v3 + v4) / (12 * STEP)
 
 
-def delta(data, j, f, q):
-    l = 0.05  # lambda, our learning factor
-    eqj = 0
-    for i in range(len(data[0])):  # for each data point
-        eqj += (data[1][i] - f(data[[0][i]], q)) * partial(f, data[[0][i]], q,
-                                                           j)
-    return l * eqj
+def compute_deltas(data, f, q):
+    l = 1e-11  # lambda, our learning factor
+    dq = []
+    for j in range(len(q)):
+        eqj = 0
+        for i in range(len(data[0])):  # for each data point
+            eqj += (data[1][i] - f(data[0][i], q)) * partial(f, data[0][i], q,
+                                                             j)
+        dq.append(l * eqj)
+    return dq
 
 
 def plot_function(f, color):
@@ -121,24 +142,31 @@ def plot_axes(x, y):
 
 
 def main():
-    plt.figure("Least Squares plot", figsize=(8, 8))
-    x_bound = [-7, 7]
-    y_bound = [-5, 5]
-    plt.xlim(x_bound[0], x_bound[1])
-    plt.ylim(y_bound[0], y_bound[1])
-    plt.xlabel("time")
-    plt.ylabel("values")
-    plot_axes(x_bound, y_bound)
+    # plt.figure("Least Squares plot", figsize=(8, 8))
+    # x_bound = [-7, 7]
+    # y_bound = [-5, 5]
+    # plt.xlim(x_bound[0], x_bound[1])
+    # plt.ylim(y_bound[0], y_bound[1])
+    # plt.xlabel("time")
+    # plt.ylabel("values")
+    # plot_axes(x_bound, y_bound)
+    #
+    # times = np.linspace(-10, 10, 100)
+    # q = [1, 1, 0, 0]
+    # plt.plot(times, sine(times, q))
+    # plt.scatter(times, sine(times, q))
+    # partial_list = []
+    # for t in times:
+    #     partial_list.append(partial(sine, t, q, 1))
+    # plt.plot(times, partial_list)
+    # plt.scatter(times, partial_list)
 
-    times = np.linspace(-10, 10, 100)
-    q = [1, 1, 0, 0]
-    plt.plot(times, sine(times, q))
-    plt.scatter(times, sine(times, q))
-    partial_list = []
-    for t in times:
-        partial_list.append(partial(sine, t, q, 1))
-    plt.plot(times, partial_list)
-    plt.scatter(times, partial_list)
+    plt.figure("Data plot", figsize=(8, 8))
+    data = read_data("input.txt")
+    plt.scatter(data[0], data[1])
+    q = [1, 10, 2, 3]
+    q = generate_least_squares(data, gaussian, q)
+    plt.scatter(data[0], gaussian(data[0], q), color='r')
 
     plt.show()
 

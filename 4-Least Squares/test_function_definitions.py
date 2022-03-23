@@ -9,3 +9,5 @@ def cubic(x):
 
 
 print(cubic([1, 2]))
+
+
