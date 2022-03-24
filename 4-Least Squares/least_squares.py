@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import argparse
 import numpy as np
 import math
+import time
 
 MAX_ITERATIONS = 1e8
 THRESHOLD = 1e-5
@@ -12,45 +13,29 @@ LAMBDA = 1e-11
 
 
 def cubic(x, q):
-    if isinstance(x, (int, np.float64)):
-        return q[0] * x ** 3 + q[1] * x ** 2 + q[2] * x + q[3]
-    elif isinstance(x, (list, np.ndarray)):
-        y = []
-        for pt in x:
-            y.append(q[0] * pt ** 3 + q[1] * pt ** 2 + q[2] * pt + q[3])
-        return y
+    return q[0] * x ** 3 + q[1] * x ** 2 + q[2] * x + q[3]
 
 
 def gaussian(x, q):
-    if isinstance(x, (int, np.float64)):
-        return q[0] ** 2 * math.e ** -((x - q[1]) ** 2 / q[2] ** 2) + q[3] ** 2
-    elif isinstance(x, (list, np.ndarray, np.generic)):
-        y = []
-        for pt in x:
-            y.append(q[0] ** 2 * math.e ** -((pt - q[1]) ** 2 / q[2] ** 2) + q[
-                3] ** 2)
-        return y
+    return q[0] ** 2 * math.e ** -((x - q[1]) ** 2 / q[2] ** 2) + q[3] ** 2
 
 
 def sine(x, q):
-    if isinstance(x, (int, np.float64)):
-        return q[0] * np.sin(q[1] * x + q[2]) + q[3]
-    elif isinstance(x, (list, np.ndarray, np.generic)):
-        y = []
-        for pt in x:
-            y.append(q[0] * np.sin(q[1] * pt + q[2]) + q[3])
-        return y
+    return q[0] * np.sin(q[1] * x + q[2]) + q[3]
 
 
 def read_data(filename):
-    data = [[], []]
+    raw_data = [[], []]
     with open(filename, 'r') as f:
         for line in f:
             l = line.split()
             # print(l)
-            data[0].append(int(l[0]))
-            data[1].append(int(l[1]))
-    # print(data)
+            raw_data[0].append(int(l[0]))
+            raw_data[1].append(int(l[1]))
+    data = np.zeros((2, len(raw_data[0])))
+    for i in range(len((data[0]))):
+        data[0][i] = raw_data[0][i]
+        data[1][i] = raw_data[1][i]
     return data
 
 
@@ -58,9 +43,10 @@ def generate_least_squares(data, f, q):
     check = 1e5
     prev_e = error(data, f, q)
     prev_dq = np.zeros(len(q))
-    print("Inital Error:", error(data, f, q))
+    print("Inital Error:", "{:e}".format(error(data, f, q)))
 
     for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
+        start = time.time()
         for j in range(int(check)):
             dq = compute_deltas(data, f, q)
             dq = np.add(dq, np.multiply(prev_dq, MOMENTUM))
@@ -69,31 +55,38 @@ def generate_least_squares(data, f, q):
             e = error(data, f, q)
             # print(prev_e - e)
             if abs(prev_e - e) < THRESHOLD:
-                print("\n# of Iterations:", int((i + 1) * check + j))
-                print("Error:", "{:e}".format(e))
+                print("\nFinal # of Iterations:", int((i + 1) * check + j))
+                print("Final Error:", "{:e}".format(e))
                 print("Q:",
                       np.array2string(q, formatter={
                           'float_kind': '{0:.3f}'.format}))
                 return q
             prev_dq = dq
             prev_e = e
+        end = time.time()
         print("\nCheck # of Iterations:", int((i + 1) * check))
-        print("Error:", "{:e}".format(e))
+        print("Current Error:", "{:e}".format(e))
         print("Q:",
-              np.array2string(q, formatter={'float_kind': '{0:.3f}'.format}))
+              np.array2string(q, formatter={
+                  'float_kind': '{0:.3f}'.format}))
+        print("Cycle Runtime:", end - start)
 
     raise Exception("Maximum iterations exceeded.")
 
 
 def error(data, f, q):
     e = 0
-    for i in range(len(data[0])):
-        e += (data[1][i] - f(data[0][i], q)) ** 2
+    err_form = np.subtract(data[1], f(data[0], q))
+    e = np.sum(np.multiply(err_form,err_form))
+    # for i in range(len(data[0])):
+    #     e += (data[1][i] - f(data[0][i], q)) ** 2
     return e / 2
 
 
-def partial(f, x, q, j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
+def compute_partials(data, f, q,
+                     j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
     q[j] += 2 * STEP  # 2h
+    x = data[0]
     v1 = f(x, q)
     q[j] -= STEP  # h
     v2 = f(x, q)
@@ -107,10 +100,8 @@ def partial(f, x, q, j):  # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
 def compute_deltas(data, f, q):
     dq = np.zeros(len(q))
     for j in range(len(q)):
-        eqj = 0
-        for i in range(len(data[0])):  # for each data point
-            eqj += (data[1][i] - f(data[0][i], q)) * partial(f, data[0][i], q,
-                                                             j)
+        partials = compute_partials(data, f, q, j)
+        eqj = np.sum(np.multiply(np.subtract(data[1], f(data[0], q)), partials))
         dq[j] = LAMBDA * eqj
     return dq
 
@@ -132,7 +123,7 @@ def plot_axes(x, y):
 
 
 def main():
-    # plt.figure("Least Squares plot", figsize=(8, 8))
+    # plt.figure("Function and Partials plot", figsize=(8, 8))
     # x_bound = [-7, 7]
     # y_bound = [-5, 5]
     # plt.xlim(x_bound[0], x_bound[1])
@@ -159,6 +150,8 @@ def main():
     plt.scatter(data[0], gaussian(data[0], q), color='r')
 
     plt.show()
+
+    # print(cubic(np.array([1, 2, 3]), [1, 0, 0, 0]))
 
 
 if __name__ == '__main__':
