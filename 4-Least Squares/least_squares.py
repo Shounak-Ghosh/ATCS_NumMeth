@@ -3,14 +3,12 @@ import argparse
 import numpy as np
 import math
 
-# TODO replace all loops with numpy operations; sum() and mulitply()
-
 MAX_ITERATIONS = 1e8
 THRESHOLD = 1e-5
 # TODO placeholder; should be replaced with a flexible h
 STEP = 1e-6
 MOMENTUM = 0.9
-LEARNING_FACTOR = 1e-11
+LAMBDA = 1e-11
 
 
 def cubic(x, q):
@@ -59,24 +57,30 @@ def read_data(filename):
 def generate_least_squares(data, f, q):
     check = 1e5
     prev_e = error(data, f, q)
-    prev_dq = [] * len(q)
+    prev_dq = np.zeros(len(q))
     print("Inital Error:", error(data, f, q))
 
-    for k in range(int(MAX_ITERATIONS / check)):  # segment the iteration
-        for m in range(int(check)):
+    for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
+        for j in range(int(check)):
             dq = compute_deltas(data, f, q)
+            dq = np.add(dq, np.multiply(prev_dq, MOMENTUM))
             q = np.add(q, dq)
 
             e = error(data, f, q)
             # print(prev_e - e)
             if abs(prev_e - e) < THRESHOLD:
-                print("\nFinal # of Iterations: ", int((k + 1) * check + m))
+                print("\n# of Iterations:", int((i + 1) * check + j))
                 print("Error:", "{:e}".format(e))
+                print("Q:",
+                      np.array2string(q, formatter={
+                          'float_kind': '{0:.3f}'.format}))
                 return q
+            prev_dq = dq
             prev_e = e
-        print("\nCheck # of Iterations: ", int((k + 1) * check))
+        print("\nCheck # of Iterations:", int((i + 1) * check))
         print("Error:", "{:e}".format(e))
-        print("Q:", q)
+        print("Q:",
+              np.array2string(q, formatter={'float_kind': '{0:.3f}'.format}))
 
     raise Exception("Maximum iterations exceeded.")
 
@@ -107,24 +111,8 @@ def compute_deltas(data, f, q):
         for i in range(len(data[0])):  # for each data point
             eqj += (data[1][i] - f(data[0][i], q)) * partial(f, data[0][i], q,
                                                              j)
-        dq[j] = LEARNING_FACTOR * eqj
+        dq[j] = LAMBDA * eqj
     return dq
-
-
-def plot_function(f, color):
-    """
-    Plots the function in the given color
-    @param f: The function to be plotted
-    @param color: The color the function should be plotted in
-    """
-    vals = []
-    times = np.linspace(-10, 10, 100)
-    for time in times:
-        vals.append(f(time))
-
-    plt.scatter(times, vals, color=color)
-    plt.plot(times, vals, color=color)
-    plt.draw()
 
 
 def plot_axes(x, y):
@@ -154,7 +142,7 @@ def main():
     # plot_axes(x_bound, y_bound)
     #
     # times = np.linspace(-10, 10, 100)
-    # q = np.array([1, 1, 0, 0])
+    # q = [1, 1, 0, 0]
     # plt.plot(times, sine(times, q))
     # plt.scatter(times, sine(times, q))
     # partial_list = []
@@ -166,7 +154,7 @@ def main():
     plt.figure("Data plot", figsize=(8, 8))
     data = read_data("input.txt")
     plt.scatter(data[0], data[1])
-    q = np.array([1, 10, 2, 3])
+    q = [1, 10, 2, 3]
     q = generate_least_squares(data, gaussian, q)
     plt.scatter(data[0], gaussian(data[0], q), color='r')
 
