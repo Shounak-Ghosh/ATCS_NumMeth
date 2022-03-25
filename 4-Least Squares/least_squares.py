@@ -4,9 +4,8 @@ import numpy as np
 import math
 import time
 
-MAX_ITERATIONS = 1e8
+MAX_ITERATIONS = 1e6
 THRESHOLD = 1e-5
-# TODO placeholder; should be replaced with a flexible h
 STEP = 1e-6
 MOMENTUM = 0.9
 LAMBDA = 1e-11
@@ -30,8 +29,8 @@ def read_data(filename):
         for line in f:
             l = line.split()
             # print(l)
-            raw_data[0].append(int(l[0]))
-            raw_data[1].append(int(l[1]))
+            raw_data[0].append(float(l[0]))
+            raw_data[1].append(float(l[1]))
     data = np.zeros((2, len(raw_data[0])))
     for i in range(len((data[0]))):
         data[0][i] = raw_data[0][i]
@@ -40,14 +39,15 @@ def read_data(filename):
 
 
 def generate_least_squares(data, f, q):
-    check = 1e5
+    cycle = 1e5
     prev_e = error(data, f, q)
     prev_dq = np.zeros(len(q))
     print("Inital Error:", "{:e}".format(error(data, f, q)))
 
-    for i in range(int(MAX_ITERATIONS / check)):  # segment the iteration
-        start = time.time()
-        for j in range(int(check)):
+    init_start = time.time()
+    for i in range(int(MAX_ITERATIONS / cycle)):  # segment the iteration
+        cycle_start = time.time()
+        for j in range(int(cycle)):
             dq = compute_deltas(data, f, q)
             dq = np.add(dq, np.multiply(prev_dq, MOMENTUM))
             q = np.add(q, dq)
@@ -55,31 +55,37 @@ def generate_least_squares(data, f, q):
             e = error(data, f, q)
             # print(prev_e - e)
             if abs(prev_e - e) < THRESHOLD:
-                print("\nFinal # of Iterations:", int((i + 1) * check + j))
+                final_end = time.time()
+                print("\nFinal # of Iterations:", int((i + 1) * cycle + j))
                 print("Final Error:", "{:e}".format(e))
                 print("Q:",
                       np.array2string(q, formatter={
                           'float_kind': '{0:.3f}'.format}))
+                print("Total Runtime:", final_end - init_start)
                 return q
             prev_dq = dq
             prev_e = e
-        end = time.time()
-        print("\nCheck # of Iterations:", int((i + 1) * check))
+        cycle_end = time.time()
+        print("\n# of Iterations:", int((i + 1) * cycle))
         print("Current Error:", "{:e}".format(e))
         print("Q:",
               np.array2string(q, formatter={
                   'float_kind': '{0:.3f}'.format}))
-        print("Cycle Runtime:", end - start)
+        print("Cycle Runtime:", cycle_end - cycle_start)
 
-    raise Exception("Maximum iterations exceeded.")
+    print("Maximum iterations exceeded.")
+    print("Final Error:", "{:e}".format(e))
+    print("Q:",
+          np.array2string(q, formatter={
+              'float_kind': '{0:.3f}'.format}))
+    final_end = time.time()
+    print("Total Runtime:", final_end - init_start)
+    return q
 
 
 def error(data, f, q):
-    e = 0
     err_form = np.subtract(data[1], f(data[0], q))
-    e = np.sum(np.multiply(err_form,err_form))
-    # for i in range(len(data[0])):
-    #     e += (data[1][i] - f(data[0][i], q)) ** 2
+    e = np.sum(np.multiply(err_form, err_form))
     return e / 2
 
 
@@ -142,16 +148,41 @@ def main():
     # plt.plot(times, partial_list)
     # plt.scatter(times, partial_list)
 
-    plt.figure("Data plot", figsize=(8, 8))
-    data = read_data("input.txt")
-    plt.scatter(data[0], data[1])
-    q = [1, 10, 2, 3]
-    q = generate_least_squares(data, gaussian, q)
-    plt.scatter(data[0], gaussian(data[0], q), color='r')
+    flag = False
+    plt.figure("Least Squares Plot", figsize=(8, 8))
+    plt.xlabel("x")
+    plt.ylabel("y")
+    if flag:
+        gaussian_filename = "GeigerHistoOriginal.txt"
+        gaussian_q = [1, 10, 3, 2]
+        data = read_data(gaussian_filename)
+        plt.scatter(data[0], data[1], label="Raw Data", color='b')
+        plt.plot(data[0], data[1], color='b')
+        gaussian_q = generate_least_squares(data, gaussian, gaussian_q)
+        plt.scatter(data[0], gaussian(data[0], gaussian_q), color='r',
+                    label="Least Squares Estimation")
+        plt.plot(data[0], gaussian(data[0], gaussian_q), color='r')
+        plt.legend(loc="upper right")
+    else:
+        LAMBDA = 1e-5
+        sine1_filename = "UCrBMg2.txt"
+        sine2_filename = "UCrBHe1.txt"
+        sine_q = [1, 1, 1, 1]
+        data = read_data(sine1_filename)
+        plt.scatter(data[0], data[1], label="Raw Data", color='b')
+        plt.plot(data[0], data[1], color='b')
+        sine_q = generate_least_squares(data, sine, sine_q)
+        plt.scatter(data[0], sine(data[0], sine_q), color='r',
+                    label="Least Squares Estimation")
+        plt.plot(data[0], sine(data[0], sine_q), color='r')
+        plt.legend(loc="upper right")
+
+
+
+
+
 
     plt.show()
-
-    # print(cubic(np.array([1, 2, 3]), [1, 0, 0, 0]))
 
 
 if __name__ == '__main__':
