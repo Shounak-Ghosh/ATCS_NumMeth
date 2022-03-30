@@ -82,7 +82,7 @@ def generate_least_squares(data, f, q, step, learning_rate, momentum, threshold,
                 print("Q:",
                       np.array2string(q, formatter={
                           'float_kind': '{0:.3f}'.format}))
-                print("Total Runtime:", final_end - init_start)
+                print("Total Runtime:", final_end - init_start, "\n")
                 return q
             prev_dq = dq
             prev_e = e
@@ -100,7 +100,7 @@ def generate_least_squares(data, f, q, step, learning_rate, momentum, threshold,
           np.array2string(q, formatter={
               'float_kind': '{0:.3f}'.format}))
     final_end = time.time()
-    print("Total Runtime:", final_end - init_start)
+    print("Total Runtime:", final_end - init_start, "\n")
     return q
 
 
@@ -114,7 +114,7 @@ def error(data, f, q):
 # limit definition: f(x,y,z) = f(x,y+h,z) - f(x,y,z)/h
 def compute_partials(data, f, q, j, step):
     """
-    Computes the partial derivatives of the function
+    Computes the partial derivatives of the function using the five-point stencil method
     @param data: the raw data points
     @param f: the function being fitted to the data
     @param q: array of coefficients
@@ -166,7 +166,7 @@ def plot_axes(x, y):
     plt.plot(t, y, 'k-')
 
 
-def main(c, g, s):
+def main(c, g, s, d_filename):
     """
     Main function
     """
@@ -189,86 +189,81 @@ def main(c, g, s):
     # plt.plot(times, partial_list)
     # plt.scatter(times, partial_list)
 
-    plt.figure("Least Squares Plot", figsize=(6, 6))
-    plt.xlabel("x")
-    plt.ylabel("y")
+    if d_filename is not None:
+        data = read_data(d_filename)
+    else:
+        return
 
     # Define constants across all functions
     MAX_ITERATIONS = .6e6
     STEP = 1e-6
     MOMENTUM = 0.9
-    if c:
+    if c is not None:
         # Specific constants for the gaussian function
         LAMBDA = 1e-11
-        THRESHOLD = 1e-11
-        cubic_filename = "cubic_data.txt"
-        cubic_q = [1, 1, 1, 1]
-        data = read_data(cubic_filename)
-        print("Fitting data to cubic function")
+        THRESHOLD = 1e-5
+        cubic_q = np.asarray(c).astype(float)
+        print("Fitting CUBIC to", d_filename)
+        plt.figure("Cubic Least Squares Plot", figsize=(6, 6))
+        plt.xlabel("x")
+        plt.ylabel("y")
         cubic_q = generate_least_squares(
             data, cubic, cubic_q, STEP, LAMBDA, MOMENTUM, THRESHOLD, MAX_ITERATIONS)
         plt.scatter(data[0], data[1], label="Raw Data", color='b')
         plt.scatter(data[0], cubic(data[0], cubic_q), color='r',
                     label="Least Squares Estimation")
         plt.plot(data[0], cubic(data[0], cubic_q), color='r')
-        if cubic_q[0] > 0:
-            plt.legend(loc="upper left")
-        else:
-            plt.legend(loc="upper right")
-
-        plt.show()
-    elif g:
+        plt.legend()
+    elif g is not None: # q = 1 10 3 2
         # Specific constants for the gaussian function
         LAMBDA = 1e-11
         THRESHOLD = 1e-1
-        gaussian_filename = "GeigerHistoOriginal.txt"
-        gaussian_q = [1, 10, 3, 2]
-        data = read_data(gaussian_filename)
-        print("Fitting data to gaussian function")
+        gaussian_q = np.asarray(g).astype(float)
+        print("Fitting GAUSSIAN to", d_filename)
+        plt.figure("Gaussian Least Squares Plot", figsize=(6, 6))
+        plt.xlabel("x")
+        plt.ylabel("y")
         gaussian_q = generate_least_squares(
             data, gaussian, gaussian_q, STEP, LAMBDA, MOMENTUM, THRESHOLD, MAX_ITERATIONS)
         plt.scatter(data[0], data[1], label="Raw Data", color='b')
         plt.scatter(data[0], gaussian(data[0], gaussian_q), color='r',
                     label="Least Squares Estimation")
         plt.plot(data[0], gaussian(data[0], gaussian_q), color='r')
-        plt.legend(loc="upper right")
-        plt.show()
-    elif s >= 0:
+        plt.legend()
+    elif s is not None:
         # Define constants
         LAMBDA = 1e-5
         THRESHOLD = 1e-5
-        sine1_filename = "UCrBMg2.txt"
-        sine2_filename = "UCrBHe1.txt"
-        if s == 0:
-            data = read_data(sine1_filename)
-        elif s ==1:
-            data = read_data(sine2_filename)
-        sine_q = [1, 1, 1, 1]
-        
-        print("Fitting data to sine function")
+
+        sine_q = np.asarray(c).astype(float)
+        print("Fitting SINE to", d_filename)
+        plt.figure("Sine Least Squares Plot", figsize=(6, 6))
+        plt.xlabel("x")
+        plt.ylabel("y")
         sine_q = generate_least_squares(
             data, sine, sine_q, STEP, LAMBDA, MOMENTUM, THRESHOLD, MAX_ITERATIONS)
-        plt.scatter(data[0], data[1], label="Raw Data", color='b',s=50)
+        plt.scatter(data[0], data[1], label="Raw Data", color='b', s=50)
         plt.scatter(data[0], sine(data[0], sine_q), color='r',
                     label="Least Squares Estimation")
         plt.plot(data[0], sine(data[0], sine_q), color='r')
-        if s == 0:
-            plt.legend(loc="upper right")
-        elif s == 1:
-            plt.legend(loc="upper left")
+        plt.legend()
+
+    if c is None and g is None and s is None:
+        print("No function selected.")
+    else:
         plt.show()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--cubic",
-                        help="fit raw data to cubic function",
-                        action='store_true')
-    parser.add_argument("-g", "--gaussian",
-                        help="fit raw data to gaussian function",
-                        action='store_true')
-    parser.add_argument("-s", "--sine",
-                        help="fit raw data (0, 1 for different datasets) to sine function",
-                       type=int,default=-1)
+    parser.add_argument("-c", "--cubic", nargs="+",
+                        help="initial parameters for cubic function")
+    parser.add_argument("-g", "--gaussian", nargs='+',
+                        help="intial parameters for gaussian function")
+    parser.add_argument("-s", "--sine", nargs="+",
+                        help="initial parameters for sine function")
+    parser.add_argument("-d", "--dataset", 
+                        help="pwd of txt file containing the raw data",
+                        type=str)
     args = parser.parse_args()
-    main(args.cubic, args.gaussian, args.sine)
+    main(args.cubic, args.gaussian, args.sine, args.dataset)
