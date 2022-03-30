@@ -1,0 +1,9 @@
+CUBIC
+cubic_dataset.txt
+
+GAUSSIAN
+GeigerHistoOriginal.txt
+
+SINE
+UCrBMg2.txt
+UCrBHe1.txt
