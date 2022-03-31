@@ -70,10 +70,16 @@ def generate_least_squares(data, f, q, step, learning_rate, momentum, threshold,
             dq = learning_rate * compute_deltas(data, f, q, step)
             dq += momentum * prev_dq
             q += dq
-            # dq = np.add(dq, np.multiply(prev_dq, MOMENTUM))
-            # q = np.add(q, dq)
+            prev_dq = dq
 
             e = error(data, f, q)
+            if e > prev_e: #rollback
+                q -= dq
+                prev_dq = 0
+                learning_rate /= 2
+            else:
+                learning_rate *= 1.05 
+
             # print(prev_e - e)
             if abs(e - prev_e) < threshold:
                 final_end = time.time()
@@ -84,7 +90,6 @@ def generate_least_squares(data, f, q, step, learning_rate, momentum, threshold,
                           'float_kind': '{0:.3f}'.format}))
                 print("Total Runtime:", final_end - init_start, "\n")
                 return q
-            prev_dq = dq
             prev_e = e
         cycle_end = time.time()
         print("\n# of Iterations:", int((k + 1) * epoch))
@@ -200,8 +205,8 @@ def main(c, g, s, d_filename):
     MOMENTUM = 0.9
     if c is not None:
         # Specific constants for the gaussian function
-        LAMBDA = 1e-11
-        THRESHOLD = 1e-5
+        LAMBDA = 1e-10
+        THRESHOLD = 1e-1
         cubic_q = np.asarray(c).astype(float)
         print("Fitting CUBIC to", d_filename)
         plt.figure("Cubic Least Squares Plot", figsize=(6, 6))
@@ -235,7 +240,7 @@ def main(c, g, s, d_filename):
         LAMBDA = 1e-5
         THRESHOLD = 1e-5
 
-        sine_q = np.asarray(c).astype(float)
+        sine_q = np.asarray(s).astype(float)
         print("Fitting SINE to", d_filename)
         plt.figure("Sine Least Squares Plot", figsize=(6, 6))
         plt.xlabel("x")
