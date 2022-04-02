@@ -175,24 +175,6 @@ def main(c, g, s, d_filename):
     """
     Main function
     """
-    # plt.figure("Function and Partials plot", figsize=(8, 8))
-    # x_bound = [-7, 7]
-    # y_bound = [-5, 5]
-    # plt.xlim(x_bound[0], x_bound[1])
-    # plt.ylim(y_bound[0], y_bound[1])
-    # plt.xlabel("time")
-    # plt.ylabel("values")
-    # plot_axes(x_bound, y_bound)
-    #
-    # times = np.linspace(-10, 10, 100)
-    # q = [1, 1, 0, 0]
-    # plt.plot(times, sine(times, q))
-    # plt.scatter(times, sine(times, q))
-    # partial_list = []
-    # for t in times:
-    #     partial_list.append(partial(sine, t, q, 1))
-    # plt.plot(times, partial_list)
-    # plt.scatter(times, partial_list)
 
     if d_filename is not None:
         data = read_data(d_filename)
@@ -200,7 +182,7 @@ def main(c, g, s, d_filename):
         return
 
     # Define constants across all functions
-    MAX_ITERATIONS = .6e6
+    MAX_ITERATIONS = 1e6 #.6e6
     STEP = 1e-6
     MOMENTUM = 0.9
     if c is not None:
