@@ -1,3 +1,4 @@
+from cProfile import label
 from turtle import tracer
 import matplotlib.pyplot as plt
 import numpy as np
@@ -74,8 +75,6 @@ def f4_integral(x):
     """
     return np.cos(x)
 
-# trapezoidal rule
-
 
 def trapezoidal(f, a, b, n):
     """
@@ -92,7 +91,6 @@ def trapezoidal(f, a, b, n):
     return h / 2 * sum
 
 
-# simpsons 1/3 rule
 def simpsons(f, a, b, n):
     """
     Uses the simpsons 1/3 rule to approximate the integral of f from a to b
@@ -111,61 +109,33 @@ def simpsons(f, a, b, n):
     sum = np.sum(f(x[::2]) + 4 * f(x[1::2]) + np.pad(f(x[2::2]), (1, 0)))
     return h / 3 * sum
 
-def plot_axes(x, y):
-    """
-    Plots x and y axes
-    @param x: list of min and max x values
-    @param y: list of min and max y values
-    """
-    # x = []
-    # for time in times:
-    #     x.append(0)
-    # plt.plot(times, x, 'k-')
-    # plt.plot(x, times, 'k-')
-    t = [0, 0]
-    plt.plot(x, t, 'k-')
-    plt.plot(t, y, 'k-')
+
+def plot_integral(nf, f, a, b, n):
+    x = np.linspace(a, b, n)
+    y = np.zeros((2, n))
+    for i in range(n):
+        y[0][i] = x[i]
+        if x[i] >= 0:
+            y[1][i] = nf(f, 0, x[i], n)
+        else:
+            y[1][i] = -nf(f, 0, -x[i], n)
+
+    return y
+
 
 def main():
     """
     Main function
     """
-    x = np.linspace(-2, 2, 10)
-    plt.figure("Integration Plot", figsize=(6, 6))
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plot_axes([-2,2],[-5,5])
-    # Original function plots
-    plt.plot(x, f1(x), label='f1')
-    # plt.plot(x, f2(x), label='f2')
-    # plt.plot(x, f3(x), label='f3')
-    # plt.plot(x, f4(x), label='f4')
-
-    # Closed form integral plots
-    plt.plot(x, f1_integral(x), label='f1 integral')
-    plt.scatter(x, f1_integral(x))
-    # plt.plot(x, f2_integral(x), label='f2 integral')
-    # plt.scatter(x, f2_integral(x))
-    # plt.plot(x, f3_integral(x), label='f3 integral')
-    # plt.scatter(x, f3_integral(x))
-    # plt.plot(x, f4_integral(x), label='f4 integral')
-    # plt.scatter(x, f4_integral(x))
-
-    # # Trapezoidal rule plots
-    # plt.scatter(x[0], trapezoidal(f1, x[0], x[1], 1000), label='f1 trapezoidal')
-
-    # verify that the integral computations are correct
-    print(f1_integral(2) - f1_integral(-2))
-    print(trapezoidal(f1, -2, 2, 1000))
-    print(simpsons(f1, -2, 2, 1000))
-
-    
-
-
-
-
-    plt.legend()
-    plt.show()
+    f_arr = [f1, f2, f3, f4]
+    f_closed_arr = [f1_integral, f2_integral, f3_integral, f4_integral]
+    n = 100
+    for i in range(len(f_arr)):
+        print("f"+str(i))
+        print("closed form integral:", str(
+            f_closed_arr[i](2) - f_closed_arr[i](-2)))
+        print("trapezoidal:", trapezoidal(f_arr[i], -2, 2, n))
+        print("simpsons:", simpsons(f_arr[i], -2, 2, n), '\n')
 
 
 # run main
