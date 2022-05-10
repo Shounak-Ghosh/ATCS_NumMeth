@@ -3,9 +3,9 @@ Integration Lab
 @author Shounak Ghosh
 @version 5.09.2022
 """
+from turtle import color
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 
 def f1(x):
@@ -41,7 +41,7 @@ def f2_integral(x):
     @param x: x value/array
     @return: integral of f2
     """
-    return np.exp(-x ** 2) / 2
+    return -np.exp(-x ** 2) / 2
 
 
 def f3(x):
@@ -113,8 +113,10 @@ def simpsons(f, a, b, n):
     sum = np.sum(f(x[::2]) + 4 * f(x[1::2]) + np.pad(f(x[2::2]), (1, 0)))
     return h / 3 * sum
 
-#TODO deal with + C issue (integral plot is off by a constant based on starting a value)
-# Realize that F' = 0 when f is at a min/max, this provides a point of reference for the integral plot
+# TODO deal with + C issue (integral plot is off by a constant based on starting a value)
+# Realize that when F' = 0, integral is at a min/max when f(x) = 0
+
+
 def plot_integral(intf, f, a, b, n):
     """
     Plots the integral of f from a to b
@@ -129,7 +131,25 @@ def plot_integral(intf, f, a, b, n):
 
     for i in range(n):
         y[i] = intf(f, a, x[i], n)
+
+    # find constant and adjust the integral plot accordingly
+    min_index = np.argmin(f(x))
+    max_index = np.argmax(f(x))
+    c = y[min_index]
+    if min_index == 0 or min_index == n - 1:
+        c = y[max_index]
+    elif max_index == 0 or max_index == n - 1:
+        c = y[min_index]
+    elif min_index == n-1 or min_index == n - 1 and max_index == 0 or max_index == n - 1:
+        c = 0
+    # print(min_index, np.amin(f(x)), y[min_index])
+    # print(max_index, np.amax(f(x)), y[max_index])
+    # print(c)
+    # c=0
+
+    y += -c
     return y
+
 
 def plot_axes(x, y):
     """
@@ -156,18 +176,23 @@ def main():
             f_closed_arr[i](2) - f_closed_arr[i](-2)))
         print("trapezoidal:", trapezoidal(f_arr[i], -2, 2, n))
         print("simpsons:", simpsons(f_arr[i], -2, 2, n), '\n')
-    
+
     # print(trapezoidal(f4, -2, 0, n))
     # print(simpsons(f4, -2, 0, n))
-    # print(f4_integral(0)- f4_integral(-2)) 
-    
+    # print(f4_integral(0)- f4_integral(-2))
+
     # Plotting
-    plt.figure("Integrals Plot", figsize=(5, 5))
+    plt.figure("Integrals Plot", figsize=(6, 6))
     x = np.linspace(-2, 2, 100)
-    plot_axes([-2,2],[-1,1])
-    plt.plot(x, f4(x), 'b-', label='f4')
-    plt.plot(x, f4_integral(x), 'r-', label='closed form f4 integral')
-    plt.scatter(np.linspace(-3.14/2,2,50), plot_integral(trapezoidal,f4,-3.14/2,2,50), marker='o', label='f4_trapezoidal')
+    index = 3
+
+    plot_axes([-2, 2], [-4, 4])
+    plt.plot(x, f_arr[index](x), 'b-', label='f'+str(index + 1))
+    plt.plot(x, f_closed_arr[index](x), 'r-',
+             label='closed form f' + str(index + 1) + 'integral')
+    plt.scatter(x, plot_integral(trapezoidal,
+                f_arr[index], -2, 2, 100), marker='o', color='xkcd:warm purple' ,alpha=0.4, label='f' +str(index + 1) + '_trapezoidal')
+    # plt.scatter(np.linspace(-3.14/2,2,50), plot_integral(trapezoidal,f4,-3.14/2,2,50), marker='o', label='f4_trapezoidal')
     plt.show()
 
 
