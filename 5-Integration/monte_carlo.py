@@ -1,9 +1,19 @@
+"""
+Monte Carlo Lab
+@author Shounak Ghosh
+@version 5.09.2022
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
 
 def monte_carlo(dimensions, num_iterations):
+    """
+    Monte Carlo approximation
+    @param dimensions: number of dimensions
+    @param num_iterations: number of iterations
+    """
     N = np.random.uniform(-1, 1, (dimensions, num_iterations))
     num_in_circle = 0
 
@@ -20,6 +30,9 @@ def monte_carlo(dimensions, num_iterations):
 
 
 def plot_monte_carlo():
+    """
+    Plots Monte Carlo approximation and 3D histogram for two dimensions
+    """
     plt.figure("Monte Carlo Plot", figsize=(5, 5))
 
     # plot circle
@@ -29,7 +42,7 @@ def plot_monte_carlo():
     plt.plot(x, y, 'k-')
 
     # generate random points
-    num_iter = int(1e3)
+    num_iter = int(1e6)
     N = np.random.uniform(-1, 1, (2, num_iter))
     num_in_circle = 0
 
@@ -44,7 +57,7 @@ def plot_monte_carlo():
         plt.pause(1e-7)
 
     print("Ratio:", num_in_circle / num_iter)
-    print("Pi (Approximation):", 4 * num_in_circle / int(1e6))
+    print("Pi (Approximation):", 4 * num_in_circle / num_iter)
 
     # random number histogram
     fig = plt.figure("Random Number Histogram", figsize=(5, 5))

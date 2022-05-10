@@ -1,7 +1,11 @@
-from cProfile import label
-from turtle import tracer
+"""
+Integration Lab
+@author Shounak Ghosh
+@version 5.09.2022
+"""
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 
 def f1(x):
@@ -73,7 +77,7 @@ def f4_integral(x):
     @param x: x value/array
     @return: integral of f4
     """
-    return np.cos(x)
+    return -np.cos(x)
 
 
 def trapezoidal(f, a, b, n):
@@ -100,7 +104,7 @@ def simpsons(f, a, b, n):
     @param n: number of subintervals
     @return: integral of f from a to b
     """
-
+    # make n even
     if n % 2 == 1:
         n += 1
 
@@ -109,18 +113,34 @@ def simpsons(f, a, b, n):
     sum = np.sum(f(x[::2]) + 4 * f(x[1::2]) + np.pad(f(x[2::2]), (1, 0)))
     return h / 3 * sum
 
-
-def plot_integral(nf, f, a, b, n):
+#TODO deal with + C issue (integral plot is off by a constant based on starting a value)
+# Realize that F' = 0 when f is at a min/max, this provides a point of reference for the integral plot
+def plot_integral(intf, f, a, b, n):
+    """
+    Plots the integral of f from a to b
+    @param intf: The integrating function being used (trapezoidal or simpsons)
+    @param f: function to integrate
+    @param a: lower bound
+    @param b: upper bound
+    @param n: number of subintervals
+    """
     x = np.linspace(a, b, n)
-    y = np.zeros((2, n))
-    for i in range(n):
-        y[0][i] = x[i]
-        if x[i] >= 0:
-            y[1][i] = nf(f, 0, x[i], n)
-        else:
-            y[1][i] = -nf(f, 0, -x[i], n)
+    y = np.zeros(n)
 
+    for i in range(n):
+        y[i] = intf(f, a, x[i], n)
     return y
+
+def plot_axes(x, y):
+    """
+    Plots x and y axes
+    @param x: list of min and max x values
+    @param y: list of min and max y values
+    """
+
+    t = [0, 0]
+    plt.plot(x, t, 'k-')
+    plt.plot(t, y, 'k-')
 
 
 def main():
@@ -136,6 +156,19 @@ def main():
             f_closed_arr[i](2) - f_closed_arr[i](-2)))
         print("trapezoidal:", trapezoidal(f_arr[i], -2, 2, n))
         print("simpsons:", simpsons(f_arr[i], -2, 2, n), '\n')
+    
+    # print(trapezoidal(f4, -2, 0, n))
+    # print(simpsons(f4, -2, 0, n))
+    # print(f4_integral(0)- f4_integral(-2)) 
+    
+    # Plotting
+    plt.figure("Integrals Plot", figsize=(5, 5))
+    x = np.linspace(-2, 2, 100)
+    plot_axes([-2,2],[-1,1])
+    plt.plot(x, f4(x), 'b-', label='f4')
+    plt.plot(x, f4_integral(x), 'r-', label='closed form f4 integral')
+    plt.scatter(np.linspace(-3.14/2,2,50), plot_integral(trapezoidal,f4,-3.14/2,2,50), marker='o', label='f4_trapezoidal')
+    plt.show()
 
 
 # run main
