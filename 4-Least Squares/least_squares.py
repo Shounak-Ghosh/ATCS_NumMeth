@@ -1,8 +1,13 @@
-import matplotlib.pyplot as plt
+"""
+Least squares lab
+@author Shounak Ghosh
+@version 5.03.2022
+"""
 import argparse
-import numpy as np
 import math
 import time
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def cubic(x, q):
@@ -73,12 +78,12 @@ def generate_least_squares(data, f, q, step, learning_rate, momentum, threshold,
             prev_dq = dq
 
             e = error(data, f, q)
-            if e > prev_e: #rollback
+            if e > prev_e:  # rollback
                 q -= dq
                 prev_dq = 0
                 learning_rate /= 2
             else:
-                learning_rate *= 1.05 
+                learning_rate *= 1.05
 
             # print(prev_e - e)
             if abs(e - prev_e) < threshold:
@@ -182,7 +187,7 @@ def main(c, g, s, d_filename):
         return
 
     # Define constants across all functions
-    MAX_ITERATIONS = 1e6 #.6e6
+    MAX_ITERATIONS = 1e6  # .6e6
     STEP = 1e-6
     MOMENTUM = 0.9
     if c is not None:
@@ -201,7 +206,7 @@ def main(c, g, s, d_filename):
                     label="Least Squares Estimation")
         plt.plot(data[0], cubic(data[0], cubic_q), color='r')
         plt.legend()
-    elif g is not None: # q = 1 10 3 2
+    elif g is not None:  # q = 1 10 3 2
         # Specific constants for the gaussian function
         LAMBDA = 1e-11
         THRESHOLD = 1e-1
@@ -249,7 +254,7 @@ if __name__ == '__main__':
                         help="intial parameters for gaussian function")
     parser.add_argument("-s", "--sine", nargs="+",
                         help="initial parameters for sine function")
-    parser.add_argument("-d", "--dataset", 
+    parser.add_argument("-d", "--dataset",
                         help="pwd of txt file containing the raw data",
                         type=str)
     args = parser.parse_args()
