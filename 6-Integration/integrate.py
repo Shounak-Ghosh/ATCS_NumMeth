@@ -94,8 +94,18 @@ def trapezoidal(f, a, b, n):
     sum = np.sum(f(x) + np.pad(f(x[1:]), (1, 0)))
     return h / 2 * sum
 
+def simpsons13(f, a, b, n):
+    """
+    Uses the simpsons 1/3 rule to approximate the integral of f from a to b
+    @param f: function to integrate
+    @param a: lower bound
+    @param b: upper bound
+    @param n: number of subintervals
+    @return: integral of f from a to b
+    """
+    return (b-a)/6 * (f(a) + 4*f((a+b)/2) + f(b))
 
-def simpsons(f, a, b, n):
+def simpsons_composite(f, a, b, n):
     """
     Uses the simpsons 1/3 rule to approximate the integral of f from a to b
     @param f: function to integrate
@@ -113,8 +123,16 @@ def simpsons(f, a, b, n):
     sum = np.sum(f(x[::2]) + 4 * f(x[1::2]) + np.pad(f(x[2::2]), (1, 0)))
     return h / 3 * sum
 
-# TODO deal with + C issue (integral plot is off by a constant based on starting a value)
-# Realize that when F' = 0, integral is at a min/max when f(x) = 0
+def simpsons38(f, a, b, n):
+    """
+    Uses the simpsons 3/8 rule to approximate the integral of f from a to b
+    @param f: function to integrate
+    @param a: lower bound
+    @param b: upper bound
+    @param n: number of subintervals
+    @return: integral of f from a to b
+    """
+    return (b-a)/8 * (f(a) + 3*f((2*a+b)/3) + 3*f((a+2*b)/3) + f(b))
 
 
 def plot_integral(intf, f, a, b, n):
@@ -133,19 +151,19 @@ def plot_integral(intf, f, a, b, n):
         y[i] = intf(f, a, x[i], n)
 
     # find constant and adjust the integral plot accordingly
-    min_index = np.argmin(f(x))
-    max_index = np.argmax(f(x))
-    c = y[min_index]
-    if min_index == 0 or min_index == n - 1:
-        c = y[max_index]
-    elif max_index == 0 or max_index == n - 1:
-        c = y[min_index]
-    elif min_index == n-1 or min_index == n - 1 and max_index == 0 or max_index == n - 1:
-        c = 0
+    # min_index = np.argmin(f(x))
+    # max_index = np.argmax(f(x))
+    # c = y[min_index]
+    # if min_index == 0 or min_index == n - 1:
+    #     c = y[max_index]
+    # elif max_index == 0 or max_index == n - 1:
+    #     c = y[min_index]
+    # elif min_index == n-1 or min_index == n - 1 and max_index == 0 or max_index == n - 1:
+    #     c = 0
     # print(min_index, np.amin(f(x)), y[min_index])
     # print(max_index, np.amax(f(x)), y[max_index])
     # print(c)
-    # c=0
+    c=0
 
     y += -c
     return y
@@ -162,7 +180,9 @@ def plot_axes(x, y):
     plt.plot(x, t, 'k-')
     plt.plot(t, y, 'k-')
 
-
+#TODO closed form plot does not align with the numerically calculated integral
+# because the "sweeping" method (subtracting evenly spaced points from A) 
+# is not being used
 def main():
     """
     Main function
@@ -175,24 +195,27 @@ def main():
         print("closed form integral:", str(
             f_closed_arr[i](2) - f_closed_arr[i](-2)))
         print("trapezoidal:", trapezoidal(f_arr[i], -2, 2, n))
-        print("simpsons:", simpsons(f_arr[i], -2, 2, n), '\n')
+        print("simpsons:", simpsons38(f_arr[i], -2, 2,100), '\n')
 
     # print(trapezoidal(f4, -2, 0, n))
     # print(simpsons(f4, -2, 0, n))
     # print(f4_integral(0)- f4_integral(-2))
 
     # Plotting
-    plt.figure("Integrals Plot", figsize=(6, 6))
-    x = np.linspace(-2, 2, 100)
-    index = 3
-
-    plot_axes([-2, 2], [-4, 4])
-    plt.plot(x, f_arr[index](x), 'b-', label='f'+str(index + 1))
-    plt.plot(x, f_closed_arr[index](x), 'r-',
+    for index in range(4):
+        plt.figure(str(index+1)+" Integral Plot", figsize=(6, 6))
+        x = np.linspace(-2, 2, 100)
+        # plot_axes([-2, 2], [-4, 4])
+        # plt.plot(x, f_arr[index](x), 'b-', label='f'+str(index + 1))
+        plt.plot(x, f_closed_arr[index](x), 'r-',
              label='closed form f' + str(index + 1) + 'integral')
-    plt.scatter(x, plot_integral(trapezoidal,
-                f_arr[index], -2, 2, 100), marker='o', color='xkcd:warm purple' ,alpha=0.4, label='f' +str(index + 1) + '_trapezoidal')
-    # plt.scatter(np.linspace(-3.14/2,2,50), plot_integral(trapezoidal,f4,-3.14/2,2,50), marker='o', label='f4_trapezoidal')
+        plt.scatter(x, plot_integral(trapezoidal,
+                f_arr[index], -2, 2, 100), marker='o', color='xkcd:warm purple', alpha=0.4, label='f' + str(index + 1) + '_trapezoidal')
+        plt.scatter(x, plot_integral(simpsons38,
+                f_arr[index], -2, 2, 100), marker='^', color='c', alpha=0.4, label='f' + str(index + 1) + '_simpsons')
+         # plt.scatter(np.linspace(-3.14/2,2,50), plot_integral(trapezoidal,f4,-3.14/2,2,50), marker='o', label='f4_trapezoidal')
+        plt.draw()
+        
     plt.show()
 
 
