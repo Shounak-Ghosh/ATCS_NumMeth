@@ -3,6 +3,6 @@
 ## Dependencies
 For Python:
 ```
-pip install matplotlib
+pip install -r requirements.txt
 ```
 Code formatted in accordance to `flake8`.
